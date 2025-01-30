@@ -9,7 +9,7 @@ import { AssistantStreamEvent } from "openai/resources/beta/assistants/assistant
 import { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs";
 
 type MessageProps = {
-  role: "user" | "assistant" | "code";
+  role: "user" | "assistant" | "code" | "processing";
   text: string;
 };
 
@@ -38,6 +38,32 @@ const CodeMessage = ({ text }: { text: string }) => {
   );
 };
 
+const ProcessingMessage = ({ text }: { text: string }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className={styles.processingMessage}>
+      <div className={styles.processingHeader}>
+        <div className={styles.spinner} />
+        <span>Processing...</span>
+        <button
+          className={styles.toggleButton}
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? "Hide details ▴" : "Show details ▾"}
+        </button>
+      </div>
+      <div
+        className={`${styles.processingContent} ${
+          isExpanded ? styles.expanded : styles.collapsed
+        }`}
+      >
+        {text}
+      </div>
+    </div>
+  );
+};
+
 const Message = ({ role, text }: MessageProps) => {
   switch (role) {
     case "user":
@@ -46,6 +72,8 @@ const Message = ({ role, text }: MessageProps) => {
       return <AssistantMessage text={text} />;
     case "code":
       return <CodeMessage text={text} />;
+    case "processing":
+      return <ProcessingMessage text={text} />;
     default:
       return null;
   }
@@ -135,14 +163,14 @@ const Chat = ({
 
   // textCreated - create new assistant message
   const handleTextCreated = () => {
-    appendMessage("assistant", "");
+    appendMessage("processing", "");
   };
 
   // textDelta - append text to last assistant message
   const handleTextDelta = (delta) => {
     if (delta.value != null) {
       appendToLastMessage(delta.value);
-    };
+    }
     if (delta.annotations != null) {
       annotateLastMessage(delta.annotations);
     }
@@ -151,12 +179,12 @@ const Chat = ({
   // imageFileDone - show image in chat
   const handleImageFileDone = (image) => {
     appendToLastMessage(`\n![${image.file_id}](/api/files/${image.file_id})\n`);
-  }
+  };
 
   // toolCallCreated - log new tool call
   const toolCallCreated = (toolCall) => {
     if (toolCall.type != "code_interpreter") return;
-    appendMessage("code", "");
+    appendMessage("processing", "");
   };
 
   // toolCallDelta - log delta and snapshot for the tool call
@@ -186,6 +214,17 @@ const Chat = ({
   // handleRunCompleted - re-enable the input form
   const handleRunCompleted = () => {
     setInputDisabled(false);
+    // Convert the last processing message to an assistant message if it exists
+    setMessages((prevMessages) => {
+      const lastMessage = prevMessages[prevMessages.length - 1];
+      if (lastMessage.role === "processing") {
+        return [
+          ...prevMessages.slice(0, -1),
+          { role: "assistant", text: lastMessage.text },
+        ];
+      }
+      return prevMessages;
+    });
   };
 
   const handleReadableStream = (stream: AssistantStream) => {
@@ -236,17 +275,16 @@ const Chat = ({
         ...lastMessage,
       };
       annotations.forEach((annotation) => {
-        if (annotation.type === 'file_path') {
+        if (annotation.type === "file_path") {
           updatedLastMessage.text = updatedLastMessage.text.replaceAll(
             annotation.text,
             `/api/files/${annotation.file_path.file_id}`
           );
         }
-      })
+      });
       return [...prevMessages.slice(0, -1), updatedLastMessage];
     });
-    
-  }
+  };
 
   return (
     <div className={styles.chatContainer}>
