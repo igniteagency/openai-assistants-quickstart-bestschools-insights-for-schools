@@ -163,13 +163,15 @@ const Chat = ({
 
   // textCreated - create new assistant message
   const handleTextCreated = () => {
-    appendMessage("processing", "");
+    appendMessage("assistant", "");
   };
 
   // textDelta - append text to last assistant message
   const handleTextDelta = (delta) => {
     if (delta.value != null) {
-      appendToLastMessage(delta.value);
+      // Clean up citation references
+      const cleanedText = delta.value.replace(/【[^】]+】/g, "");
+      appendToLastMessage(cleanedText);
     }
     if (delta.annotations != null) {
       annotateLastMessage(delta.annotations);
@@ -183,15 +185,27 @@ const Chat = ({
 
   // toolCallCreated - log new tool call
   const toolCallCreated = (toolCall) => {
-    if (toolCall.type != "code_interpreter") return;
+    if (toolCall.type !== "code_interpreter") return;
+    // Show processing message for code interpreter calls
     appendMessage("processing", "");
   };
 
   // toolCallDelta - log delta and snapshot for the tool call
   const toolCallDelta = (delta, snapshot) => {
-    if (delta.type != "code_interpreter") return;
-    if (!delta.code_interpreter.input) return;
-    appendToLastMessage(delta.code_interpreter.input);
+    if (delta.type !== "code_interpreter") return;
+
+    // Handle both input and output from code interpreter
+    const content =
+      delta.code_interpreter?.input || delta.code_interpreter?.output || "";
+    if (!content) return;
+
+    // Find the last message
+    const lastMessage = messages[messages.length - 1];
+
+    // Only append to message if it's a processing message
+    if (lastMessage?.role === "processing") {
+      appendToLastMessage(content);
+    }
   };
 
   // handleRequiresAction - handle function call
@@ -217,7 +231,7 @@ const Chat = ({
     // Convert the last processing message to an assistant message if it exists
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
-      if (lastMessage.role === "processing") {
+      if (lastMessage?.role === "processing") {
         return [
           ...prevMessages.slice(0, -1),
           { role: "assistant", text: lastMessage.text },

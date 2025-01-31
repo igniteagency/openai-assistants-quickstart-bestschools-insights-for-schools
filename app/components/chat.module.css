@@ -77,6 +77,111 @@
 
 .assistantMessage {
   background-color: #efefef;
+  white-space: normal; /* Override pre-wrap from messages */
+}
+
+/* Table styles */
+.assistantMessage table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+
+.assistantMessage th {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.assistantMessage td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.assistantMessage tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.assistantMessage tr:hover {
+  background-color: #f0f0f0;
+}
+
+.assistantMessage p {
+  margin: 1em 0; /* Increase paragraph margins */
+}
+
+.assistantMessage h1,
+.assistantMessage h2,
+.assistantMessage h3 {
+  margin: 1.5em 0 0.75em 0; /* Add spacing around headings */
+}
+
+.assistantMessage ol,
+.assistantMessage ul {
+  margin: 1em 0; /* Increase list margins */
+  padding-left: 2em;
+}
+
+.assistantMessage ol {
+  counter-reset: item;
+  list-style-type: none;
+}
+
+.assistantMessage ol > li {
+  counter-increment: item;
+  position: relative;
+  padding-left: 0.5em;
+  margin: 1em 0; /* Increase spacing between list items */
+}
+
+.assistantMessage ol > li::before {
+  content: counter(item) ".";
+  position: absolute;
+  left: -2.5em;
+  width: 2em;
+  text-align: right;
+}
+
+.assistantMessage ul > li {
+  margin: 0.75em 0; /* Slightly less spacing for unordered list items */
+}
+
+/* Handle nested lists */
+.assistantMessage ol ol,
+.assistantMessage ol ul,
+.assistantMessage ul ul,
+.assistantMessage ul ol {
+  margin: 0.75em 0 0.75em 1em; /* Adjust nested list margins */
+}
+
+/* Add spacing after list items that contain nested lists */
+.assistantMessage li > ol,
+.assistantMessage li > ul {
+  margin-top: 0.5em;
+}
+
+/* Add more spacing between major sections */
+.assistantMessage > ol > li,
+.assistantMessage > ul > li {
+  margin: 1.25em 0; /* Larger spacing for top-level list items */
+}
+
+.assistantMessage a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.assistantMessage a:hover {
+  text-decoration: underline;
+}
+
+/* Hide citation references that use square brackets or other unusual formats */
+.assistantMessage a + span:has(> :is([【], [】], [†])),
+.assistantMessage span:has(> :is([【], [】], [†])) {
+  display: none;
 }
 
 .codeMessage {
@@ -102,7 +207,8 @@
   padding: 8px 16px;
   align-self: flex-start;
   max-width: 80%;
-  overflow: hidden;
+  width: 100%;
+  overflow: visible;
   transition: all 0.3s ease;
 }
 
@@ -144,7 +250,8 @@
   color: #666;
   font-size: 0.9em;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  opacity: 1;
+  transition: all 0.3s ease;
 }
 
 .processingContent.collapsed {
@@ -152,12 +259,14 @@
   margin-top: 0;
   padding-top: 0;
   padding-bottom: 0;
+  opacity: 0;
 }
 
 .processingContent.expanded {
-  max-height: 500px;
+  max-height: none;
   padding-top: 8px;
   padding-bottom: 8px;
+  opacity: 1;
 }
 
 @keyframes spin {
